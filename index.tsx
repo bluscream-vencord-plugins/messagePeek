@@ -1,8 +1,9 @@
-/*
- * Vencord, a Discord client mod
- * Copyright (c) 2026 Vendicated and contributors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
+export const pluginInfo = {
+    id: "messagePeek",
+    name: "Message Peek",
+    description: "Message Peek",
+    color: "#7289da"
+};
 
 import "./style.css";
 
@@ -22,7 +23,7 @@ import { ChannelStore, MessageStore, RelationshipStore, SnowflakeUtils, UserStor
 import { Logger } from "@utils/Logger";
 
 const cl = classNameFactory("vc-message-peek-");
-const logger = new Logger("Message Peek", "#7289da");
+const logger = new Logger(pluginInfo.name, pluginInfo.color);
 
 const PrivateChannelClasses = findCssClassesLazy("subtext", "channel", "interactive");
 const ActivityClasses = findCssClassesLazy("textWithIconContainer", "icon", "truncated", "container", "textXs");
@@ -241,12 +242,9 @@ function shouldShowActivity(lastMessage: Message | undefined, hasActivity: boole
     return Date.now() - messageTimestamp > ONE_HOUR_MS;
 }
 
-const pluginId = "messagePeek";
-const pluginName = "Message Peek";
-
 export default definePlugin({
-    name: pluginName,
-    description: pluginName,
+    name: "Message Peek",
+    description: "Message Peek",
     authors: [Devs.prism, EquicordDevs.justjxke],
     patches: [
         {
