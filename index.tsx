@@ -1,41 +1,59 @@
-export const pluginInfo = {
-    id: "messagePeek",
-    name: "Message Peek",
-    description: "Message Peek",
-    color: "#7289da"
-};
-
+//// Plugin originally written for Equicord at 2026-02-16 by https://github.com/Bluscream, https://antigravity.google
+// region Imports
 import "./style.css";
 
-import { DecoratorProps } from "@api/MemberListDecorators";
 import { isPluginEnabled } from "@api/PluginManager";
 import betterActivities from "@equicordplugins/betterActivities";
 import showMeYourName from "@plugins/showMeYourName";
-import { definePluginSettings } from "@api/Settings";
 import { Devs, EquicordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { classes } from "@utils/misc";
-import definePlugin, { OptionType } from "@utils/types";
+import definePlugin from "@utils/types";
 import { Activity, ApplicationStream, Channel, Message, OnlineStatus, User } from "@vencord/discord-types";
 import { MessageFlags } from "@vencord/discord-types/enums";
-import { findByCodeLazy, findByPropsLazy, findComponentByCodeLazy, findCssClassesLazy, findExportedComponentLazy } from "@webpack";
-import { ChannelStore, MessageStore, RelationshipStore, SnowflakeUtils, UserStore, useStateFromStores } from "@webpack/common";
+import {
+    findByCodeLazy,
+    findByPropsLazy,
+    findComponentByCodeLazy,
+    findCssClassesLazy,
+    findExportedComponentLazy
+} from "@webpack";
+import {
+    ChannelStore,
+    MessageStore,
+    RelationshipStore,
+    SnowflakeUtils,
+    UserStore,
+    useStateFromStores
+} from "@webpack/common";
 import { Logger } from "@utils/Logger";
 
+import { settings } from "./settings";
+import { DecoratorProps } from "@api/MemberListDecorators";
+// endregion Imports
+
+// region PluginInfo
+export const pluginInfo = {
+    id: "messagePeek",
+    name: "MessagePeek",
+    description: "Peeks at the last message of DMs in the channel list",
+    color: "#7289da",
+    authors: [
+        Devs.prism,
+        EquicordDevs.justjxke,
+        { name: "Bluscream", id: 467777925790564352n },
+        { name: "Assistant", id: 0n }
+    ],
+};
+// endregion PluginInfo
+
+// region Variables
 const cl = classNameFactory("vc-message-peek-");
-const logger = new Logger(pluginInfo.name, pluginInfo.color);
+const logger = new Logger(pluginInfo.id, pluginInfo.color);
 
 const PrivateChannelClasses = findCssClassesLazy("subtext", "channel", "interactive");
 const ActivityClasses = findCssClassesLazy("textWithIconContainer", "icon", "truncated", "container", "textXs");
 const MessageActions = findByPropsLazy("fetchMessages", "sendMessage");
-
-const settings = definePluginSettings({
-    fetchUncached: {
-        type: OptionType.BOOLEAN,
-        description: "Fetch the last message for DMs on startup if not cached. This will cause network requests and may be logged.",
-        default: true
-    }
-});
 
 const hasRelevantActivity: (props: ActivityCheckProps) => boolean = findByCodeLazy(".OFFLINE||", ".INVISIBLE)return!1");
 const ActivityText: React.ComponentType<ActivityTextProps> = findComponentByCodeLazy("hasQuest:", "hideEmoji:");
@@ -60,7 +78,9 @@ const ATTACHMENT_LABELS: Record<AttachmentType, string> = {
     video: "video",
     file: "file"
 };
+// endregion Variables
 
+// region Types
 interface ActivityCheckProps {
     activities: Activity[] | null;
     status: OnlineStatus;
@@ -84,12 +104,12 @@ interface MessageContent {
     text: string;
     icon?: IconType;
 }
+// endregion Types
 
+// region Utils
 function getActivityIcons(activities: Activity[] | null, user: User): React.ReactNode {
     if (!activities?.length) return null;
-
     if (!isPluginEnabled(betterActivities.name)) return null;
-
     return betterActivities.patchActivityList({
         activities,
         user,
@@ -152,6 +172,16 @@ function getMessageContent(message: Message): MessageContent | null {
     return null;
 }
 
+function shouldShowActivity(lastMessage: Message | undefined, hasActivity: boolean): boolean {
+    if (!hasActivity) return false;
+    if (!lastMessage) return true;
+
+    const messageTimestamp = SnowflakeUtils.extractTimestamp(lastMessage.id);
+    return Date.now() - messageTimestamp > ONE_HOUR_MS;
+}
+// endregion Utils
+
+// region Components
 function MessagePreviewContent({ channel, user }: { channel: Channel; user: User | null | undefined; }) {
     const lastMessage = useStateFromStores(
         [MessageStore],
@@ -233,19 +263,15 @@ function Timestamp({ channel }: { channel: Channel; }) {
     const timestamp = SnowflakeUtils.extractTimestamp(lastMessage.id);
     return <span className={cl("timestamp")}>{formatRelativeTime(timestamp)}</span>;
 }
+// endregion Components
 
-function shouldShowActivity(lastMessage: Message | undefined, hasActivity: boolean): boolean {
-    if (!hasActivity) return false;
-    if (!lastMessage) return true;
-
-    const messageTimestamp = SnowflakeUtils.extractTimestamp(lastMessage.id);
-    return Date.now() - messageTimestamp > ONE_HOUR_MS;
-}
-
+// region Definition
 export default definePlugin({
-    name: "Message Peek",
-    description: "Message Peek",
-    authors: [Devs.prism, EquicordDevs.justjxke],
+    name: pluginInfo.name,
+    description: pluginInfo.description,
+    authors: pluginInfo.authors,
+    settings,
+
     patches: [
         {
             find: "PrivateChannel.renderAvatar",
@@ -255,8 +281,6 @@ export default definePlugin({
             }
         }
     ],
-
-    settings,
 
     async start() {
         if (!settings.store.fetchUncached) return;
@@ -292,3 +316,4 @@ export default definePlugin({
         );
     }
 });
+// endregion Definition
