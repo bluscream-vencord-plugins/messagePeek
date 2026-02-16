@@ -32,20 +32,8 @@ import { settings } from "./settings";
 import { DecoratorProps } from "@api/MemberListDecorators";
 // endregion Imports
 
-// region PluginInfo
-export const pluginInfo = {
-    id: "messagePeek",
-    name: "MessagePeek",
-    description: "Peeks at the last message of DMs in the channel list",
-    color: "#7289da",
-    authors: [
-        Devs.prism,
-        EquicordDevs.justjxke,
-        { name: "Bluscream", id: 467777925790564352n },
-        { name: "Assistant", id: 0n }
-    ],
-};
-// endregion PluginInfo
+import { pluginInfo } from "./info";
+export { pluginInfo };
 
 // region Variables
 const cl = classNameFactory("vc-message-peek-");
